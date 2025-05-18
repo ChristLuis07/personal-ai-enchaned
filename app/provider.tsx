@@ -1,8 +1,22 @@
-import React from 'react'
+"use client"
 
-function Provider() {
+import React from 'react'
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
+
+function Provider({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <div>Provider</div>
+    <NextThemesProvider
+    attribute="class"
+    defaultTheme='dark'
+    enableSystem
+    disableTransitionOnChange
+    >
+    <div>{children}</div>
+    </NextThemesProvider>
   )
 }
 
