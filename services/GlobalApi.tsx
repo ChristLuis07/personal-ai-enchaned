@@ -1,11 +1,18 @@
-import axios from "axios";
+import axios from 'axios';
 
-export const GetAuthUserData= async (token:string)=> {
-    const userInfo = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: {
-                    Authorization: 'Bearer' + token
-                },
-            });
-            
-            return userInfo.data;
-}
+export const GetAuthUserData = async (token: string) => {
+  try {
+    const userInfo = await axios.get(
+      'https://www.googleapis.com/oauth2/v3/userinfo',
+      {
+        headers: {
+          Authorization: 'Bearer' + token,
+        },
+      }
+    );
+    return userInfo.data;
+  } catch (error) {
+    console.error('Error dari GlobalApi.tsx:', error);
+    return null;
+  }
+};
