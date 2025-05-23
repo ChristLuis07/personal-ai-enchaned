@@ -10,7 +10,7 @@ import { useConvex, useMutation } from 'convex/react';
 import { Loader, Loader2Icon } from 'lucide-react';
 import { Assistant } from 'next/font/google';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useContext, useEffect, useState } from 'react';
 
 export type ASSISTANT = {
@@ -32,6 +32,8 @@ function AIAssistant() {
   const [loading, setLoading] = useState(false);
   const convex = useConvex();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const allowReselect = searchParams.get('reselect');
 
   useEffect(() => {
     user && GetUserAssistants();
@@ -44,7 +46,9 @@ function AIAssistant() {
         uid: user._id,
       }
     );
-    if (result.length > 0) {
+
+    // Only redirect if user isn't trying to reselect
+    if (result.length > 0 && !allowReselect) {
       router.replace('/workspace');
       return;
     }
@@ -73,12 +77,22 @@ function AIAssistant() {
 
   const OnCLickContinue = async () => {
     setLoading(true);
-    const result = await insertAssistants({
-      records: selectedAssistant,
-      uid: user?._id,
-    });
-    setLoading(false);
+    try {
+      const result = await insertAssistants({
+        records: selectedAssistant,
+        uid: user?._id,
+      });
+
+      // Redirect to workspace after successful save
+      router.push('/workspace');
+    } catch (error) {
+      console.error('Error saving assistants:', error);
+      // Handle error appropriately
+    } finally {
+      setLoading(false);
+    }
   };
+
   return (
     <div className="px-10 mt-20 md:px-28 lg:px-36 xl:px-48">
       <div className="flex justify-between items-center">
