@@ -47,10 +47,8 @@ function AIAssistant() {
       }
     );
 
-    // Only redirect if user isn't trying to reselect
     if (result.length > 0 && !allowReselect) {
-      router.replace('/workspace');
-      return;
+      console.log('User already has assistants selected');
     }
   };
 
@@ -76,6 +74,11 @@ function AIAssistant() {
   };
 
   const OnCLickContinue = async () => {
+    // Only proceed if assistants are selected
+    if (selectedAssistant.length === 0) {
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await insertAssistants({
@@ -83,11 +86,9 @@ function AIAssistant() {
         uid: user?._id,
       });
 
-      // Redirect to workspace after successful save
       router.push('/workspace');
     } catch (error) {
       console.error('Error saving assistants:', error);
-      // Handle error appropriately
     } finally {
       setLoading(false);
     }
