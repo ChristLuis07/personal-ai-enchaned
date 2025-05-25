@@ -6,6 +6,7 @@ export default [
     // model: 'google/gemini-2.0-flash-lite-001',//OpenRouter.ai
     logo: '/google.png',
   },
+
   {
     id: 2,
     name: 'OpenAI: GPT-4o-mini',
@@ -13,6 +14,7 @@ export default [
     // model: 'openai/gpt-4o-mini',//OpenRouter.ai
     logo: '/chatgpt.png',
   },
+
   {
     id: 3,
     name: 'OpenAI: GPT-3.5 Turbo',

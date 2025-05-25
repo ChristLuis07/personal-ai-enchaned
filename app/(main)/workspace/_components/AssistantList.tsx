@@ -10,6 +10,7 @@ import { ASSISTANT } from '../../ai-assistants/page';
 import { div } from 'motion/react-client';
 import Image from 'next/image';
 import { AssistantContext } from '@/context/AssistantContext';
+import AiAssistantsList from '@/services/AiAssistantsList';
 
 function AssistantList() {
   const { user } = useContext(AuthContext);
