@@ -7,6 +7,7 @@ export default function Home() {
       <h1 className="text-3xl text-blue-400">Home</h1>
       
       <Button>Bikin Kopi</Button>
+      
     </div>
   );
 }
