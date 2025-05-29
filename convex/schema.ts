@@ -18,5 +18,6 @@ export default defineSchema({
     userInstruction: v.string(),
     sampleQuestions: v.any(),
     uid: v.id('users'),
+    isActive: v.optional(v.boolean()),
   }),
 });

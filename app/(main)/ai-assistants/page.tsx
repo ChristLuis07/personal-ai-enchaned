@@ -2,13 +2,13 @@
 
 import { BlurFade } from '@/components/magicui/blur-fade';
 import { RainbowButton } from '@/components/magicui/rainbow-button';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AuthContext } from '@/context/AuthContext';
 import { api } from '@/convex/_generated/api';
 import AiAssistantsList from '@/services/AiAssistantsList';
 import { useConvex, useMutation } from 'convex/react';
-import { Loader, Loader2Icon } from 'lucide-react';
-import { Assistant } from 'next/font/google';
+import { Loader2Icon, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useContext, useEffect, useState } from 'react';
@@ -25,9 +25,7 @@ export type ASSISTANT = {
 
 function AIAssistant() {
   const [selectedAssistant, setSelectedAssistant] = useState<ASSISTANT[]>([]);
-  const insertAssistants = useMutation(
-    api.UserAiAssistants.InsertSelectedAssistants
-  );
+  const insertAssistants = useMutation(api.UserAiAssistants.InsertSelectedAssistants);
   const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const convex = useConvex();
@@ -36,52 +34,54 @@ function AIAssistant() {
   const allowReselect = searchParams.get('reselect');
 
   useEffect(() => {
-    user && GetUserAssistants();
+    if (user) {
+      GetUserAssistants();
+    }
   }, [user]);
 
   const GetUserAssistants = async () => {
-    const result = await convex.query(
-      api.UserAiAssistants.GetAllUserAssistants,
-      {
+    if (!user?._id) return;
+    
+    try {
+      const result = await convex.query(api.UserAiAssistants.GetAllUserAssistants, {
         uid: user._id,
-      }
-    );
+      });
 
-    if (result.length > 0 && !allowReselect) {
-      console.log('User already has assistants selected');
+      if (result && result.length > 0 && !allowReselect) {
+        setSelectedAssistant(result);
+        router.push('/workspace');
+      }
+    } catch (error) {
+      console.error('Error fetching assistants:', error);
     }
   };
 
   const onSelect = (assistant: ASSISTANT) => {
-    const item = selectedAssistant.find(
-      (item: ASSISTANT) => item.id == assistant.id
-    );
+    const item = selectedAssistant.find((item: ASSISTANT) => item.id === assistant.id);
 
     if (item) {
-      setSelectedAssistant((prev) =>
-        prev.filter((item: ASSISTANT) => item.id !== assistant.id)
-      );
-      return;
+      setSelectedAssistant(prev => prev.filter((item: ASSISTANT) => item.id !== assistant.id));
+    } else {
+      setSelectedAssistant(prev => [...prev, assistant]);
     }
-    setSelectedAssistant((prev) => [...prev, assistant]);
   };
 
-  const IsAssistantSelected = (assistant: any) => {
-    const item = selectedAssistant.find(
-      (item: ASSISTANT) => item.id == assistant.id
-    );
-    return item ? true : false;
+  const IsAssistantSelected = (assistant: ASSISTANT) => {
+    return selectedAssistant.some((item: ASSISTANT) => item.id === assistant.id);
+  };
+
+  const clearSelection = () => {
+    setSelectedAssistant([]);
   };
 
   const OnCLickContinue = async () => {
-    // Only proceed if assistants are selected
     if (selectedAssistant.length === 0) {
       return;
     }
 
     setLoading(true);
     try {
-      const result = await insertAssistants({
+      await insertAssistants({
         records: selectedAssistant,
         uid: user?._id,
       });
@@ -89,7 +89,6 @@ function AIAssistant() {
       router.push('/workspace');
     } catch (error) {
       console.error('Error saving assistants:', error);
-    } finally {
       setLoading(false);
     }
   };
@@ -105,24 +104,41 @@ function AIAssistant() {
           </BlurFade>
           <BlurFade delay={0.25 * 2} inView>
             <p className="text-xl mt-2">
-              Choose your AI Campanion to Simplify Your Task 🚀
+              Choose your AI Companions to Simplify Your Tasks 🚀
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              Please select at least one assistant to continue
             </p>
           </BlurFade>
         </div>
-        <RainbowButton
-          disabled={selectedAssistant?.length == 0}
-          onClick={OnCLickContinue}
-        >
-          {loading && <Loader2Icon className="animate-spin" />}Continue
-        </RainbowButton>
+        <div className="flex gap-2">
+          {selectedAssistant.length > 0 && (
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={clearSelection}
+            >
+              <Trash2 className="w-4 h-4" />
+              Clear Selection
+            </Button>
+          )}
+          <RainbowButton
+            disabled={selectedAssistant.length === 0}
+            onClick={OnCLickContinue}
+          >
+            {loading && <Loader2Icon className="animate-spin mr-2" />}
+            Continue ({selectedAssistant.length} selected)
+          </RainbowButton>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 mt-5">
         {AiAssistantsList.map((assistant, index) => (
-          <BlurFade key={assistant.image} delay={0.25 + index * 0.05} inView>
+          <BlurFade key={assistant.id} delay={0.25 + index * 0.05} inView>
             <div
-              key={index}
-              className="hover:border p-3 rounded-xl hover:scale-105 transition-all ease-in-out cursor-pointer relative"
+              className={`border p-3 rounded-xl hover:scale-105 transition-all ease-in-out cursor-pointer relative
+                ${IsAssistantSelected(assistant) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'hover:border-gray-300'}
+              `}
               onClick={() => onSelect(assistant)}
             >
               <Checkbox
@@ -136,10 +152,10 @@ function AIAssistant() {
                 height={600}
                 className="rounded-xl w-full h-[200px] object-cover"
               />
-              <h2 className="text-center font-bold text-lg">
+              <h2 className="text-center font-bold text-lg mt-2">
                 {assistant.name}
               </h2>
-              <h2 className="text-center text-gray-600 dark:text-gray-600">
+              <h2 className="text-center text-gray-600 dark:text-gray-400">
                 {assistant.title}
               </h2>
             </div>
